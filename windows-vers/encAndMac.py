@@ -75,8 +75,8 @@ def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
 
     print("Sigma = ", sigma)
 
-    sumMAC = sum([bytesToInt(c1[i:i + 16]) for i in range(len(c1) // 16)]) % p
-    sumC2i = sum([bytesToInt(c2[i:i + 16]) for i in range(len(c2) // 16)]) % p
+    sumMAC = sum([bytesToInt(c1_decoded[i:i + 16]) for i in range(len(c1_decoded) // 16)]) % p
+    sumC2i = sum([bytesToInt(c2_decoded[i:i + 16]) for i in range(len(c2_decoded) // 16)]) % p
 
     inverse_sumMAC = mod_inverse(sumMAC, p)
 
