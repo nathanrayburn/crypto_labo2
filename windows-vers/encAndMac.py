@@ -49,6 +49,7 @@ def encryptAndMac(nonce, message, key):
 def mod_inverse(x, mod):
     return pow(x, -1, mod)
 
+
 '''
     m1: the first message
     nonce1: the nonce used to encrypt m1
@@ -59,18 +60,31 @@ def mod_inverse(x, mod):
     c2: the encryption of m2
     This function is designed to crack the encryption of m2
 '''
+
+
 def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
     # Decode c1 and c2 from base64
     c1_decoded = b64decode(c1)
     c2_decoded = b64decode(c2)
+    tag1_decoded = b64decode(tag1)
+    tag2_decoded = b64decode(tag2)
 
     # Split m1, c1_decoded and c2_decoded into blocks
     m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
     c1_blocks = [c1_decoded[i:i + 16] for i in range(0, len(c1_decoded), 16)]
     c2_blocks = [c2_decoded[i:i + 16] for i in range(0, len(c2_decoded), 16)]
 
-    first_block_c2 = c2_blocks[0]
+    print("Printing variables decoded")
+    print("c1 decoded : ", c1_decoded)
+    print("c2 decoded : ", c2_decoded)
+    print("tag1 decoded : ", tag1_decoded)
+    print("tag2 decoded : ", tag2_decoded)
+    print("m1 blocks : ", m1_blocks)
+    print("c1 blocks : ", c1_blocks)
+    print("c2 blocks : ", c2_blocks)
 
+    first_block_c2 = c2_blocks[0]
+    second_block_c2 = c2_blocks[1]
     sigma = (bytesToInt(c1_blocks[0]) - bytesToInt(m1_blocks[0])) % p
 
     print("Sigma = ", sigma)
@@ -92,13 +106,21 @@ def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
     print("Inverse 2 is : ", inverse_2)
     print("Inverse 2 * 2 = ", (inverse_2 * 2) % p)
 
-    m20 = (((p - bytesToInt(tag2)) + v * sumC2i + 2 * (p - bytesToInt(first_block_c2))) * inverse_2) % p
+    m20 = (((p - bytesToInt(tag2_decoded)) + v * sumC2i + 2 * (p - bytesToInt(first_block_c2))) * inverse_2) % p
+    m21 = (((p - bytesToInt(tag2_decoded)) + v * sumC2i + 2 * (p - bytesToInt(second_block_c2))) * inverse_2) % p
 
     print("M2[0] = ", m20)
     print("M2[0] = ", intToBytes(m20))
     print("Complement : ", p - m20)
     print("Complement : ", intToBytes(p - m20))
+
+    print("M2[1] = ", m21)
+    print("M2[1] = ", intToBytes(m21))
+    print("Complement : ", p - m21)
+    print("Complement : ", intToBytes(p - m21))
+
     return intToBytes(p - m20)
+
 
 m1 = b'ICRYInTheMorning'
 nonce1 = b'LIrYgrQrcRZK/BnQ'
@@ -109,8 +131,5 @@ c2 = b'Z4OCArnWY5p2DYGOpjmn1IeGeQ9n3mJHuFyni6+CotY='
 tag2 = b'Tn9i1z9LalSEg8NQz1Uujw=='
 
 crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2)
-
-
-
 
 # need to inverse temp to find v with euclide_etendu since inverse mod
