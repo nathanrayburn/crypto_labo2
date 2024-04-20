@@ -49,6 +49,56 @@ def encryptAndMac(nonce, message, key):
 def mod_inverse(x, mod):
     return pow(x, -1, mod)
 
+'''
+    m1: the first message
+    nonce1: the nonce used to encrypt m1
+    tag1: the tag of m1
+    c1: the encryption of m1
+    nonce2: the nonce used to encrypt m2
+    tag2: the tag of m2
+    c2: the encryption of m2
+    This function is designed to crack the encryption of m2
+'''
+def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
+    # Decode c1 and c2 from base64
+    c1_decoded = b64decode(c1)
+    c2_decoded = b64decode(c2)
+
+    # Split m1, c1_decoded and c2_decoded into blocks
+    m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
+    c1_blocks = [c1_decoded[i:i + 16] for i in range(0, len(c1_decoded), 16)]
+    c2_blocks = [c2_decoded[i:i + 16] for i in range(0, len(c2_decoded), 16)]
+
+    first_block_c2 = c2_blocks[0]
+
+    sigma = (bytesToInt(c1_blocks[0]) - bytesToInt(m1_blocks[0])) % p
+
+    print("Sigma = ", sigma)
+
+    sumMAC = sum([bytesToInt(c1[i:i + 16]) for i in range(len(c1) // 16)]) % p
+    sumC2i = sum([bytesToInt(c2[i:i + 16]) for i in range(len(c2) // 16)]) % p
+
+    inverse_sumMAC = mod_inverse(sumMAC, p)
+
+    print("Inverse sum mac ", inverse_sumMAC)
+    print("Inverse * sum mac = ", (inverse_sumMAC * sumMAC) % p)
+
+    v = ((bytesToInt(tag1) - sigma) * inverse_sumMAC) % p
+
+    print("V value is :", v)
+    print("Sum C2 is : ", sumC2i)
+
+    inverse_2 = mod_inverse(2, p)
+    print("Inverse 2 is : ", inverse_2)
+    print("Inverse 2 * 2 = ", (inverse_2 * 2) % p)
+
+    m20 = (((p - bytesToInt(tag2)) + v * sumC2i + 2 * (p - bytesToInt(first_block_c2))) * inverse_2) % p
+
+    print("M2[0] = ", m20)
+    print("M2[0] = ", intToBytes(m20))
+    print("Complement : ", p - m20)
+    print("Complement : ", intToBytes(p - m20))
+    return intToBytes(p - m20)
 
 m1 = b'ICRYInTheMorning'
 nonce1 = b'LIrYgrQrcRZK/BnQ'
@@ -58,40 +108,8 @@ nonce2 = b'gxRletwmC0f0HOGF'
 c2 = b'Z4OCArnWY5p2DYGOpjmn1IeGeQ9n3mJHuFyni6+CotY='
 tag2 = b'Tn9i1z9LalSEg8NQz1Uujw=='
 
-# Decode c1 and c2 from base64
-c1_decoded = b64decode(c1)
-c2_decoded = b64decode(c2)
+crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2)
 
-# Split m1, c1_decoded and c2_decoded into blocks
-m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
-c1_blocks = [c1_decoded[i:i + 16] for i in range(0, len(c1_decoded), 16)]
-c2_blocks = [c2_decoded[i:i + 16] for i in range(0, len(c2_decoded), 16)]
-
-first_block_c2 = c2_blocks[0]
-
-sigma = (bytesToInt(c1_blocks[0]) - bytesToInt(m1_blocks[0])) % p
-
-print("Sigma = ", sigma)
-
-sumMAC = sum([bytesToInt(c1[i:i + 16]) for i in range(len(c1) // 16)]) % p
-sumC2i = sum([bytesToInt(c2[i:i + 16]) for i in range(len(c2) // 16)]) % p
-
-inverse_sumMAC = mod_inverse(sumMAC,p)
-
-print("Inverse sum mac ", inverse_sumMAC)
-print("Inverse * sum mac = ", (inverse_sumMAC * sumMAC) % p)
-
-v = ((bytesToInt(tag1) - sigma) * inverse_sumMAC) % p
-
-print("V value is :", v)
-print("Sum C2 is : ", sumC2i)
-
-m20 = (((p - bytesToInt(tag2)) + v * sumC2i + 2 * (p - bytesToInt(first_block_c2))) * mod_inverse(2, p)) % p
-
-print("M2[0] = ", m20)
-print("M2[0] = ", intToBytes(m20))
-print("Complement : ", p-m20)
-print("Complement : ", intToBytes(p-m20))
 
 
 
