@@ -64,62 +64,35 @@ def mod_inverse(x, mod):
 
 def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
     # Decode c1 and c2 from base64
-    c1_decoded = b64decode(c1)
-    c2_decoded = b64decode(c2)
-    tag1_decoded = b64decode(tag1)
-    tag2_decoded = b64decode(tag2)
+    c1 = b64decode(c1)
+    c2 = b64decode(c2)
+    tag1 = b64decode(tag1)
+    tag2 = b64decode(tag2)
 
     # Split m1, c1_decoded and c2_decoded into blocks
     m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
-    c1_blocks = [c1_decoded[i:i + 16] for i in range(0, len(c1_decoded), 16)]
-    c2_blocks = [c2_decoded[i:i + 16] for i in range(0, len(c2_decoded), 16)]
+    c1_blocks = [c1[i:i + 16] for i in range(0, len(c1), 16)]
+    c2_blocks = [c2[i:i + 16] for i in range(0, len(c2), 16)]
 
-    print("Printing variables decoded")
-    print("c1 decoded : ", c1_decoded)
-    print("c2 decoded : ", c2_decoded)
-    print("tag1 decoded : ", tag1_decoded)
-    print("tag2 decoded : ", tag2_decoded)
-    print("m1 blocks : ", m1_blocks)
-    print("c1 blocks : ", c1_blocks)
-    print("c2 blocks : ", c2_blocks)
-
-    first_block_c2 = c2_blocks[0]
-    second_block_c2 = c2_blocks[1]
+    # find sigma for the first message
     sigma = (bytesToInt(c1_blocks[0]) - bytesToInt(m1_blocks[0])) % p
 
-    print("Sigma = ", sigma)
+    sumM1 = sum([bytesToInt(m1_blocks[i]) for i in range(len(m1_blocks))]) % p
+    sumC2 = sum([bytesToInt(c2_blocks[i]) for i in range(len(c2_blocks))]) % p
 
-    sumMAC = sum([bytesToInt(c1_decoded[i:i + 16]) for i in range(len(c1_decoded) // 16)]) % p
-    sumC2i = sum([bytesToInt(c2_decoded[i:i + 16]) for i in range(len(c2_decoded) // 16)]) % p
+    # find v
+    v = ((bytesToInt(tag1) - sigma) * mod_inverse(sumM1, p)) % p
 
-    inverse_sumMAC = mod_inverse(sumMAC, p)
+    # length of c2_blocks
+    n = len(c2_blocks)
+    # find sigma for the second message
+    sigma2 = (bytesToInt(tag2) - v*sumC2) * mod_inverse(1 - v*n, p) % p
 
-    print("Inverse sum mac ", inverse_sumMAC)
-    print("Inverse * sum mac = ", (inverse_sumMAC * sumMAC) % p)
-
-    v = ((bytesToInt(tag1) - sigma) * inverse_sumMAC) % p
-
-    print("V value is :", v)
-    print("Sum C2 is : ", sumC2i)
-
-    inverse_2 = mod_inverse(2, p)
-    print("Inverse 2 is : ", inverse_2)
-    print("Inverse 2 * 2 = ", (inverse_2 * 2) % p)
-
-    m20 = (((p - bytesToInt(tag2_decoded)) + v * sumC2i + 2 * (p - bytesToInt(first_block_c2))) * inverse_2) % p
-    m21 = (((p - bytesToInt(tag2_decoded)) + v * sumC2i + 2 * (p - bytesToInt(second_block_c2))) * inverse_2) % p
-
-    print("M2[0] = ", m20)
-    print("M2[0] = ", intToBytes(m20))
-    print("Complement : ", p - m20)
-    print("Complement : ", intToBytes(p - m20))
-
-    print("M2[1] = ", m21)
-    print("M2[1] = ", intToBytes(m21))
-    print("Complement : ", p - m21)
-    print("Complement : ", intToBytes(p - m21))
-
-    return intToBytes(p - m20)
+    plaintext2 = b""
+    for i, val in enumerate(c2_blocks):
+        plaintext2 += intToBytes((bytesToInt(val) - sigma2) % p)  # Decryption
+    print("Plaintext 2 = ", plaintext2)
+    return plaintext2
 
 
 m1 = b'ICRYInTheMorning'
@@ -131,5 +104,3 @@ c2 = b'Z4OCArnWY5p2DYGOpjmn1IeGeQ9n3mJHuFyni6+CotY='
 tag2 = b'Tn9i1z9LalSEg8NQz1Uujw=='
 
 crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2)
-
-# need to inverse temp to find v with euclide_etendu since inverse mod
