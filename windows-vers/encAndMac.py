@@ -63,6 +63,15 @@ def mod_inverse(x, mod):
 
 
 def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
+    print(r"""
+       ____ ____            _   __  __                                   
+      / ___|  _ \ _ __ __ _| |_ |  \/  | __ _ _ __   __ _  __ _  ___ _ __ 
+     | |   | |_) | '__/ _` | __/| |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|
+     | |___|  _ <| | | (_| | || | |  | | (_| | | | | (_| | (_| |  __/ |   
+      \____|_| \_\_|  \__,_|\__\|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|   
+                                                              |___/          
+    """)
+    print("Cracking the encryption of the second message...")
     # Decode c1 and c2 from base64
     c1 = b64decode(c1)
     c2 = b64decode(c2)
