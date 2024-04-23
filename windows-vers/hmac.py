@@ -21,7 +21,8 @@ def h(m, k):
 
 def mac(message, key):
     return h(message, key)
-
+def verify(message, key, tag):
+    return mac(message, key) == tag
 def ex():
     k = Random.get_random_bytes(16)
     m = b"Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123"
@@ -29,8 +30,9 @@ def ex():
     print("keyMac = %s" % b64encode(k), file=sys.stderr)
     print("m = %s" % m)
     print("mac = %s" % b64encode(mc))
-
+    print("verify = %s" % verify(m, k, mc))
 #m has to be a bytestring
 def pretty_print(m):
     print(m.decode("UTF-8", errors="ignore"))
 
+ex()
