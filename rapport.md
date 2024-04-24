@@ -3,7 +3,7 @@ Author : Nathan Rayburn
 
 ## Mode of op
 
-We can crack the messages, this is due because they both have the same **t** value as the first block. Since this variable is encrypted using AES with the same key, both texts have the same keystream. Even if the **t** value has changed between blocks. 
+We can decrypt the messages because both share the same **t** value in their initial block. This value is encrypted using AES under the same key, resulting in identical key streams for both texts, despite any changes in the **t** value across subsequent blocks.
 
 ---
 c1 and c2 are the ciphertexts, IV_1 and IV_2 are the initialization vectors. If t equals t2, it means that the same key (**t**) and IV were used for both encryptions.
@@ -28,11 +28,13 @@ The final concatenated message is our decrypted message.
 
 ## Enc And Mac
 
-The security issue concerning the implementation of this system is that our counter is not working. In the code, the counter is initialized in a loop, which is reset after each iteration. This makes the CTR useless. We also have our keystream that is encrypted with 16 bytes of zeros. This error provides every block of 16 bytes with the same keystream since there is no counter.
+The primary security flaw in this system's implementation lies in the malfunctioning counter. The counter is initialized within a loop, causing it to reset after each iteration, thereby rendering the counter mode (CTR) ineffective. This compromises the security by negating the benefits of the keystream's uniqueness in each encryption block.
 
-By using the math formulas, we can achieve finding **V** which is a constant used for both texts and will be usefull to find later our plain text message. We have an other unknown variable to find which is sigma. Sigma is going to be our key stream.
+Additionally, the keystream is encrypted with 16 bytes of zeros, leading to each 16-byte block lacking any randomness. This significantly undermines the security of the system by compromising the unpredictability which is essential for robust encryption. 
 
-We can find sigma by substracting our plain text block from the ciphered text block. This has to be from the same message. We can chose any block, first, second, third... etc... since they all have the same key stream due to the CTR being useless.
+By applying mathematical formulas, we can determine **V**, a constant utilized in both texts, which will be crucial for later decrypting our plaintext message. Additionally, we need to identify another unknown variable, sigma. Sigma is the keystream of our code.
+
+We can determine sigma by subtracting our plaintext block from the corresponding ciphered text block within the same message. We can choose any block—first, second, third, etc.—since they all share the same keystream, owing to the flaw of the implementation of the counter mode (CTR).
 
 $$
 \sigma = \left( (c1\_blocks[0]) - (m1\_blocks[0]) \right) \mod p
@@ -54,31 +56,33 @@ $$
 ---
 The next step is to find sigma for the second message. 
 
-We can take our initial formula and isolate sigma.
+We can take our MAC formula and isolate sigma.
 
 
 $$
 \text{{MAC = }} \sum_{i=0}^{n} m_i \cdot v + \sigma \mod p
 $$
 
-Here is sigma isolated.
+Here is sigma isolated :
 
 $$
 \sigma = \left( \text{MAC} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
 $$
 ---
 
-The issue is that we don't have mi, we must find an equivalent for it. We can do so by using a formula that we have used previously.
+The issue is that we don't have mi, we must find an equivalent for it. We can do so by using a formula that we have used previously. 
+
+We can find an equivalent by using our previous formula to find sigma :
 
 $$
 \sigma = \left( c1\_blocks[0] - m1\_blocks[0] \right) \mod p
 $$
-By isolating our message we get this.
+By isolating our message we get this :
 $$
 m1\_blocks[0] = \left( c1\_blocks[0] - \sigma \right) \mod p
 $$
-
-Now we can generalize it for the sum of mi.
+So this is for a single block.
+Now we can generalize it for all blocks of our message mi :
 
 $$
 \sum_{i=0}^{n} m_i = \left( \sum_{i=0}^{n} c_i - \sigma \right) \mod p
@@ -88,16 +92,25 @@ $$
 => \sum_{i=0}^{n} m_i = \left( \sum_{i=0}^{n} c_i  \right) - n\cdot\sigma \mod p
 $$
 
+Isolating the sigma from the sum will be useful later since it will be totally isolated in the next equation.
+
 ---
 
-We can finally replace the sum of mi in our initial formala and isolate sigma.
+We can finally replace the sum of mi in our initial formula and isolate sigma. We haven't got any unknown variables.
+
+Initial formula of sigma isolated : 
 
 $$
-\text{sumC2} = \left( \sum_{i=0}^{\text{len}(c2\_blocks)-1} \text(c2\_blocks[i]) \right) \mod p
+\sigma = \left( \text{MAC} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
 $$
 
+Sum of c2 blocks :
 $$
-\sigma_2 = \left( \left((\text{{tag2}}) - v \times \text{{sumC2}}\right) \times \text{{mod\_inverse}}(1 - v \times n, p) \right) \mod p
+\text{sumC2} = \left( \sum_{i=0}^{\text{n}} \text(c2\_blocks[i]) \right) \mod p
+$$
+Everything placed in a single equation to find sigma of the second message :
+$$
+\sigma_2 = \left( \left((\text{{tag2}}) - v \cdot \text{{sumC2}}\right) \cdot \text{{mod\_inverse}}(1 - v \cdot n, p) \right) \mod p
 $$
 
 We have finally found the sigma for the other message, this means we are ready to decrypt.
@@ -112,13 +125,13 @@ b'Congrats! The secret is cozening'
 ```
 ## HMac
 
-The issue of this implementation is that we can forge our own MAC and have a valide MAC for a key we don't know the value of. Since we know the MAC of the last block of the message, we can forge a new message by simply adding a new block to the initial message. 
+The problem with this implementation is that it allows for the forgery of a valid MAC using a key whose value we do not know. Knowing the MAC of the last block of the message, we can forge a new message by simply appending an additional block to the original message. This flaw undermines the integrity and security of the message authentication code (MAC) system.
 
 [![](https://mermaid.ink/img/pako:eNpNkMFqwzAQRH9l2XNC7i4U7NjQQ6GQXApRKKq1rYRtychSWhPl37OuklCdpNmZx6zO2DpFWOC3l6OG192TsMCnPAjsaN6Mnk7GxQm0nLTAI6zXz-kkewgOyLZ-HkOCis1ls__ooNlWbMqILaufvWu7gznek4xke55XiwLpRiGVoObEyyNf_82bW5_8YMP7226hZbnJDEu_AbhVpH-94McEnaAUFlc4kB-kUbzoeUkKDJoGEljwVUnfCRT2wj4Zg9vPtsUi-EgrjKOSgWoj-X8GLL5kP9HlCmdBYGA?type=png)](https://mermaid.live/edit#pako:eNpNkMFqwzAQRH9l2XNC7i4U7NjQQ6GQXApRKKq1rYRtychSWhPl37OuklCdpNmZx6zO2DpFWOC3l6OG192TsMCnPAjsaN6Mnk7GxQm0nLTAI6zXz-kkewgOyLZ-HkOCis1ls__ooNlWbMqILaufvWu7gznek4xke55XiwLpRiGVoObEyyNf_82bW5_8YMP7226hZbnJDEu_AbhVpH-94McEnaAUFlc4kB-kUbzoeUkKDJoGEljwVUnfCRT2wj4Zg9vPtsUi-EgrjKOSgWoj-X8GLL5kP9HlCmdBYGA)
 
 ---
 
-We first need to pad out the last block of the initial message and then the new block we want to add, we can add any value we want and then calculate the final MAC of the new message without even knowing the key.
+To exploit this vulnerability, we begin by padding the last block of the original message to meet the required block size. Next, we append any value to this padded block and pad again to ensure the new block is of the correct size. We then calculate the MAC for this newly modified message by leveraging the tag from the initial message. Specifically, we use AES to encrypt the original tag, using the newly generated block as the key. The output of this encryption is XORed with the original tag to produce a new tag. This method allows us to forge the MAC without knowing the actual encryption key, effectively bypassing the security measures designed to ensure the message's integrity.
 
 **m**            is our original message that we want to forge.
 
