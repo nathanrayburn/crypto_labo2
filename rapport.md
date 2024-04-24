@@ -26,18 +26,63 @@ $$
 $$
 v = \left( \left((\text{tag1}) - \sigma\right) \times \text{{mod\_inverse}}(\text{{sumM1}}, p) \right) \mod p
 $$
+---
+The next step is to find sigma for the second message. 
 
-The next step is to 
+We can take our initial formula and isolate sigma.
+
+
+$$
+\text{{MAC = }} \sum_{i=0}^{n} m_i \cdot v + \sigma \mod p
+$$
+
+Here is sigma isolated.
+
+$$
+\sigma = \left( \text{MAC} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
+$$
+---
+
+The issue is that we don't have mi, we must find an equivalent for it. We can do so by using a formula that we have used previously.
+
+$$
+\sigma = \left( (c1\_blocks[0]) - (m1\_blocks[0]) \right) \mod p
+$$
+By isolating our message we get this.
+$$
+m1\_blocks[0] = \left( \text{bytesToInt}(c1\_blocks[0]) - \sigma \right) \mod p
+$$
+
+Now we can generalize it for the sum of mi.
+
+$$
+\sum_{i=0}^{n} m_i = \left( \sum_{i=0}^{n} c_i - \sigma \right) \mod p
+$$
+
+$$
+=> \sum_{i=0}^{n} m_i = \left( \sum_{i=0}^{n} c_i  \right) - n\cdot\sigma \mod p
+$$
+
+---
+
+We can finally replace the sum of mi in our initial formala and isolate sigma.
+
+$$
+\text{sumC2} = \left( \sum_{i=0}^{\text{len}(c2\_blocks)-1} \text(c2\_blocks[i]) \right) \mod p
+$$
 
 $$
 \sigma_2 = \left( \left((\text{{tag2}}) - v \times \text{{sumC2}}\right) \times \text{{mod\_inverse}}(1 - v \times n, p) \right) \mod p
 $$
 
-
+We have finally found the sigma for the other message, this means we are ready to decrypt.
 $$
-\text{sumC2} = \left( \sum_{i=0}^{\text{len}(c2\_blocks)-1} \text{{bytesToInt}}(c2\_blocks[i]) \right) \mod p
+\text{{plaintext}} = \bigoplus_{c2_{block} \in c2\_blocks} \left( \left( (c2_{block}[i]) - \sigma_2 \right) \mod p \right)
 $$
 
+The result of the decrypted message : 
 
-
+```bash
+b'Congrats! The secret is cozening'
+```
 ## HMac
