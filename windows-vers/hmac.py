@@ -23,20 +23,27 @@ def mac(message, key):
     return h(message, key)
 def verify(message, key, tag):
     return mac(message, key) == tag
+def create_new_message(m, previous_mac, new_amount):
+    m = pad(m)
+    m += new_amount
+    mPrime = m
+    m = pad(m)
+    blocks = [m[i:i + 16] for i in range(0, len(m), 16)]
+    # calculate the new mac for the last new block that has been added
+    h = previous_mac
+    h = strxor(AES.new(blocks[-1], AES.MODE_ECB).encrypt(h), h)
+    return h, mPrime
 def ex():
     k = Random.get_random_bytes(16)
     m = b"Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123"
-    m2 = b"Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00800"
     mc =  mac(m, k)
-    m2_blocks = [m2[i:i + 16] for i in range(0, len(m2), 16)]
-
-    newMac = h(m2_blocks[-1], mc)
-
+    newMac, mPrime = create_new_message(m, mc, b"800")
     print("m = %s" % m)
-    print("mac = %s" % mc)
-    print("verify = %s" % verify(m, k, mc))
-    print("verify = %s" % verify(m2, k, newMac))
-    pretty_print(newMac)
+    print("m prime = %s" % mPrime)
+    print("verify original message with key = %s" % verify(m, k, mc))
+    print("verify m prime with original key = %s" % verify(mPrime, k, newMac))
+
+    pretty_print(b64encode(newMac))
 #m has to be a bytestring
 def pretty_print(m):
     print(m.decode("UTF-8", errors="ignore"))
