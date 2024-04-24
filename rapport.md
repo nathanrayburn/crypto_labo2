@@ -26,6 +26,10 @@ msg = concatenate(msg, pt)
 where msg is the decrypted message and pt is the decrypted block.
 The final concatenated message is our decrypted message.
 
+```bash
+'The secret flag is laurels\x03\x03\x03'
+```
+
 ## Enc And Mac
 
 The primary security flaw in this system's implementation lies in the malfunctioning counter. The counter is initialized within a loop, causing it to reset after each iteration, thereby rendering the counter mode (CTR) ineffective. This compromises the security by negating the benefits of the keystream's uniqueness in each encryption block.
