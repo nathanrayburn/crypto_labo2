@@ -12,7 +12,6 @@ def encrypt(message, key):
     cipher = AES.new(key, mode=AES.MODE_ECB)
 
     IV = Random.get_random_bytes(16)
-
     ciphertext = [IV]
     # First block
 
@@ -78,8 +77,7 @@ def test():
     m1 = b"This is a long enough test message to check that everything is working fine and it does. This algorithm is super secure and we will try to sell it soon to the Swiss governement."
     c1 = encrypt(m1, key)
     print(b64encode(c1))
-    m2 = decrypt(c1, key)
-    print(m2)
+    print(decrypt(c1, key))
 
     c1 = b'oovMoosEIUWgDH+EIIZVi4NWaVxpvkln1BDS23ZYXJhfa/CX7zHqQDGYpTwPP0Q4OPhgwZQxGy04CI2j1lShJci/5pN52OB8CEjz6mBNXrdlmrm2sWrEfQvBpOrc2Oo+AZz4B2LzBMB6Tkh0pceiEyIQjLWSasKXPdpEk+pHqx7w1WGTCDMhNpo8PsblPXGigg2QCazSIWVkutcwojDUdVyGtQS1bF4iCUUcxFfdCou4o/wkQ9bxITvNtwYL/c/oyrjvFSQOk6wl1MQJAoi+qQ=='
     c2 = b'6fNXqn0I2jTyVrutk9KfM8gu8lSfsrIWhkoW8sUMliBfa/CX7zHzQDGf5DYPbFE2Lb0pwdtlF2U/Dsbwx1+1I430sKJjxLRnBEXmr30eGKxrj/K2rC2IehfdpKbOtY0d'
