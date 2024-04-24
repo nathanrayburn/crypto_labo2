@@ -26,11 +26,17 @@ def verify(message, key, tag):
 def ex():
     k = Random.get_random_bytes(16)
     m = b"Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123"
+    m2 = b"Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00800"
     mc =  mac(m, k)
-    print("keyMac = %s" % b64encode(k), file=sys.stderr)
+    m2_blocks = [m2[i:i + 16] for i in range(0, len(m2), 16)]
+
+    newMac = h(m2_blocks[-1], mc)
+
     print("m = %s" % m)
-    print("mac = %s" % b64encode(mc))
+    print("mac = %s" % mc)
     print("verify = %s" % verify(m, k, mc))
+    print("verify = %s" % verify(m2, k, newMac))
+    pretty_print(newMac)
 #m has to be a bytestring
 def pretty_print(m):
     print(m.decode("UTF-8", errors="ignore"))
