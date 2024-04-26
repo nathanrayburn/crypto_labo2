@@ -46,32 +46,33 @@ def decrypt(ciphertext, key):
         message.append(m)
     return unpad(b"".join(message), 16)
 
-
+def split_into_blocks(message, block_size=16):
+    return [message[i:i + block_size] for i in range(0, len(message), block_size)]
 def crack(m1, c1, c2):
+
     m1 = pad(m1, 16)
 
-    m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
+    m1_blocks = split_into_blocks(m1)
+    c1_blocks = split_into_blocks(c1)
+    c2_blocks = split_into_blocks(c2)
+
     m2_blocks = [m1_blocks[0]]
 
-    c1_blocks = [c1[i:i + 16] for i in range(0, len(c1), 16)]
-    c2_blocks = [c2[i:i + 16] for i in range(0, len(c2), 16)]
-    t1 = strxor(c1_blocks[0], c1_blocks[1])
-    t2 = strxor(c2_blocks[0], c2_blocks[1])
+    t_1 = strxor(c1_blocks[0], c1_blocks[1])
+    t_2 = strxor(c2_blocks[0], c2_blocks[1])
 
-    if t1 == t2:
-
+    if t_1 == t_2:
         t_blocks = []
         c1_blocks = c1_blocks[2:]
         c2_blocks = c2_blocks[2:]
-
         m1_blocks = m1_blocks[1:]
 
-        for (c1_block, p1_block), c2_block in zip(zip(c1_blocks, m1_blocks), c2_blocks):
-            t_block = strxor(c1_block, p1_block)
+        for (c1_block, m1_block), c2_block in zip(zip(c1_blocks, m1_blocks), c2_blocks):
+            t_block = strxor(c1_block, m1_block)
             m2_block = strxor(t_block, c2_block)
             t_blocks.append(t_block)
             m2_blocks.append(m2_block)
-            
+
     return b"".join(m2_blocks)
 
 
