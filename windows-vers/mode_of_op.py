@@ -48,28 +48,31 @@ def decrypt(ciphertext, key):
 
 
 def crack(m1, c1, c2):
-    IV_1 = c1[:16]
-    IV_2 = c2[:16]
+    m1 = pad(m1, 16)
 
-    t = strxor(c1[16:32], IV_1)
-    t2 = strxor(c2[16:32], IV_2)
+    m1_blocks = [m1[i:i + 16] for i in range(0, len(m1), 16)]
+    m2_blocks = [m1_blocks[0]]
 
-    if t == t2:
-        print("Same key stream for the first block")
-    # t = t2 donc la meme key stream pour le premier block
+    c1_blocks = [c1[i:i + 16] for i in range(0, len(c1), 16)]
+    c2_blocks = [c2[i:i + 16] for i in range(0, len(c2), 16)]
+    t1 = strxor(c1_blocks[0], c1_blocks[1])
+    t2 = strxor(c2_blocks[0], c2_blocks[1])
 
-    c1_blocks = [c1[16 * (i + 2):16 * (i + 3)] for i in range(len(c1) // 16 - 2)]
+    if t1 == t2:
 
-    c2_blocks = [c2[16 * (i + 2):16 * (i + 3)] for i in range(len(c2) // 16 - 2)]
+        t_blocks = []
+        c1_blocks = c1_blocks[2:]
+        c2_blocks = c2_blocks[2:]
 
-    m1_blocks = [m1[16 * (i + 1):16 * (i + 2)] for i in range(len(m1) // 16 - 1)]
-    msg = [t]
+        m1_blocks = m1_blocks[1:]
 
-    for i, val in enumerate(c2_blocks):
-        current_stream = strxor(c2_blocks[i], c1_blocks[i])
-        pt = strxor(current_stream, m1_blocks[i])
-        msg.append(pt)
-    return b"".join(msg)
+        for (c1_block, p1_block), c2_block in zip(zip(c1_blocks, m1_blocks), c2_blocks):
+            t_block = strxor(c1_block, p1_block)
+            m2_block = strxor(t_block, c2_block)
+            t_blocks.append(t_block)
+            m2_blocks.append(m2_block)
+            
+    return b"".join(m2_blocks)
 
 
 def test():
