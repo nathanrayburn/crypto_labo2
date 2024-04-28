@@ -43,7 +43,7 @@ def ex():
     print("verify original message with key = %s" % verify(m, k, mc))
     print("verify m prime with original key = %s" % verify(mPrime, k, newMac))
 
-    pretty_print(b64encode(newMac))
+    pretty_print(mPrime)
 #m has to be a bytestring
 def pretty_print(m):
     print(m.decode("UTF-8", errors="ignore"))

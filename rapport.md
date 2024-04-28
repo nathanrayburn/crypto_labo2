@@ -3,40 +3,50 @@ Author : Nathan Rayburn
 
 ## Mode of op
 
-We can decrypt the messages because both share the same **t** value in their initial block. This value is encrypted using AES under the same key, resulting in identical key streams for both texts, despite any changes in the **t** value across subsequent blocks.
+### Variables 
 
----
-c1 and c2 are the ciphertexts, IV_1 and IV_2 are the initialization vectors. If t equals t2, it means that the same key (**t**) and IV were used for both encryptions.
+By analyzing the code for the encryption we have got : 
+
+- (Message, Key)
+- Padding for the message
+- Encryption by AES operation ECB
+- Random IV
+
+The issue is that **t** is the result of our encryption with the key for each block and afterwards xored with the IV. So if the two blocks of both messages ( m1 & m2 ) are the same and using the same key, we can retrieve the key stream just with one plain text.
+
+### Cracking
+
+c1 and c2 are the ciphertexts, IV_1 and IV_2 are the initialization vectors. If t1 equals t2, it means that we can decrypt the whole ciphered c2. 
 
 $$
-t = c1[16:32] \oplus IV_1
+t1 = c1[1] \oplus IV_1
 $$
 
 $$
-t2 = c2[16:32] \oplus IV_2
+t2 = c2[1] \oplus IV_2
 $$
----
-Where c1_blocks and c2_blocks are the blocks of the ciphertexts, m1_blocks are the blocks of the plaintext of the first ciphertext.  
 
-$$current\_stream = c2\_blocks[i] \oplus c1\_blocks[i]$$
-$$pt = current\_stream \oplus m1\_blocks[i]$$
+Like said, if t = t2, therefore : 
 
-The decrypted blocks are then concatenated together to form the decrypted message. This is represented as:  
-msg = concatenate(msg, pt)
-where msg is the decrypted message and pt is the decrypted block.
-The final concatenated message is our decrypted message.
+$$current\_stream = m1\_blocks[i] \oplus c1\_blocks[i]$$
+$$pt = current\_stream \oplus c2\_blocks[i]$$
+
+The decrypted blocks are then concatenated together to form the decrypted message. Finally we join each block and capture the flag.
 
 ```bash
-'The secret flag is laurels\x03\x03\x03'
+'This is a long enough message for it to be secure. The secret flag is laurels\x03\x03\x03'
 ```
 
 ## Enc And Mac
 
+### Introduction
 The primary security flaw in this system's implementation lies in the malfunctioning counter. The counter is initialized within a loop, causing it to reset after each iteration, thereby rendering the counter mode (CTR) ineffective. This compromises the security by negating the benefits of the keystream's uniqueness in each encryption block.
 
 Additionally, the keystream is encrypted with 16 bytes of zeros, leading to each 16-byte block lacking any randomness. This significantly undermines the security of the system by compromising the unpredictability which is essential for robust encryption. 
 
 By applying mathematical formulas, we can determine **V**, a constant utilized in both texts, which will be crucial for later decrypting our plaintext message. Additionally, we need to identify another unknown variable, sigma. Sigma is the keystream of our code.
+
+### The math :)
 
 We can determine sigma by subtracting our plaintext block from the corresponding ciphered text block within the same message. We can choose any block—first, second, third, etc.—since they all share the same keystream, owing to the flaw of the implementation of the counter mode (CTR).
 
@@ -47,7 +57,7 @@ $$
 The second step is to isolate **V** like so and plug in the sigma we have found previously.
 
 
-Given formula :
+ Sigma formula :
 $$
 \sigma = \left( \text{tag1} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
 $$
@@ -74,7 +84,7 @@ $$
 $$
 ---
 
-The issue is that we don't have mi, we must find an equivalent for it. We can do so by using a formula that we have used previously. 
+The issue is that we don't have m[i], we must find an equivalent for it. We can do so by using a formula that we have used previously. 
 
 We can find an equivalent by using our previous formula to find sigma :
 
@@ -86,7 +96,7 @@ $$
 m1\_blocks[0] = \left( c1\_blocks[0] - \sigma \right) \mod p
 $$
 So this is for a single block.
-Now we can generalize it for all blocks of our message mi :
+Now we can generalize it for all blocks of our message m[i] :
 
 $$
 \sum_{i=0}^{n} m_i = \left( \sum_{i=0}^{n} c_i - \sigma \right) \mod p
@@ -100,7 +110,7 @@ Isolating the sigma from the sum will be useful later since it will be totally i
 
 ---
 
-We can finally replace the sum of mi in our initial formula and isolate sigma. We haven't got any unknown variables.
+We can finally replace the sum of m[i] in our initial formula and isolate sigma. No more unknown variables.
 
 Initial formula of sigma isolated : 
 
@@ -129,13 +139,14 @@ b'Congrats! The secret is cozening'
 ```
 ## HMac
 
+### Introduction
 The problem with this implementation is that it allows for the forgery of a valid MAC using a key whose value we do not know. Knowing the MAC of the last block of the message, we can forge a new message by simply appending an additional block to the original message. This flaw undermines the integrity and security of the message authentication code (MAC) system.
 
 [![](https://mermaid.ink/img/pako:eNpNkMFqwzAQRH9l2XNC7i4U7NjQQ6GQXApRKKq1rYRtychSWhPl37OuklCdpNmZx6zO2DpFWOC3l6OG192TsMCnPAjsaN6Mnk7GxQm0nLTAI6zXz-kkewgOyLZ-HkOCis1ls__ooNlWbMqILaufvWu7gznek4xke55XiwLpRiGVoObEyyNf_82bW5_8YMP7226hZbnJDEu_AbhVpH-94McEnaAUFlc4kB-kUbzoeUkKDJoGEljwVUnfCRT2wj4Zg9vPtsUi-EgrjKOSgWoj-X8GLL5kP9HlCmdBYGA?type=png)](https://mermaid.live/edit#pako:eNpNkMFqwzAQRH9l2XNC7i4U7NjQQ6GQXApRKKq1rYRtychSWhPl37OuklCdpNmZx6zO2DpFWOC3l6OG192TsMCnPAjsaN6Mnk7GxQm0nLTAI6zXz-kkewgOyLZ-HkOCis1ls__ooNlWbMqILaufvWu7gznek4xke55XiwLpRiGVoObEyyNf_82bW5_8YMP7226hZbnJDEu_AbhVpH-94McEnaAUFlc4kB-kUbzoeUkKDJoGEljwVUnfCRT2wj4Zg9vPtsUi-EgrjKOSgWoj-X8GLL5kP9HlCmdBYGA)
 
 ---
-
-To exploit this vulnerability, we begin by padding the last block of the original message to meet the required block size. Next, we append any value to this padded block and pad again to ensure the new block is of the correct size. We then calculate the MAC for this newly modified message by leveraging the tag from the initial message. Specifically, we use AES to encrypt the original tag, using the newly generated block as the key. The output of this encryption is XORed with the original tag to produce a new tag. This method allows us to forge the MAC without knowing the actual encryption key, effectively bypassing the security measures designed to ensure the message's integrity.
+### The exploit
+To exploit this vulnerability, we begin by padding the last block of the original message to meet the required block size. Next, we append any value to this padded block and pad again to ensure the new block is of the correct size. We then calculate the MAC for this newly modified message by leveraging the tag from the initial message. Specifically, we use AES to encrypt the original tag, using the newly generated block as the key. The output of this encryption is XORed with the original tag to produce a new tag. This method allows us to forge the MAC without knowing the actual encryption key, effectively bypassing the security measures.
 
 **m**            is our original message that we want to forge.
 
@@ -159,5 +170,21 @@ def create_new_message(m, previous_mac, new_amount):
     return h, mPrime
 ```
 So now we have **mPrime** that will be able to validate the verify function with our new tag without knowing the value of the **key**.
+
+```python
+verify(m, k, mc) # return = true, m = original message, k = orignal key, mc = tag
+verify(mPrime, k, newMac) # return = true, mPrime = our modified message, k = still the original key, newMac = says for it self
+
+```
+This is an issue because knowing that our intended message was :
+
+```bash
+'Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123'
+```
+
+We were able to make a new message tho it's still passing the verification, turning to this :
+```bash
+`Sender: Alexandre Duc; Destination account 12-1234-12. Amount CHF123           800`
+```
 
 ---
