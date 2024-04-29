@@ -9,7 +9,7 @@ By analyzing the code for the encryption we have got :
 
 - (Message, Key)
 - Padding for the message
-- Encryption by AES operation ECB
+- Encryption by AES mode of op ECB
 - Random IV
 
 The issue is that **t** is the result of our encryption with the key for each block and afterwards xored with the IV. So if the two blocks of both messages ( m1 & m2 ) are the same and using the same key, we can retrieve the key stream just with one plain text.
