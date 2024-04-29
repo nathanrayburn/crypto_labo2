@@ -12,7 +12,7 @@ By analyzing the code for the encryption we have got :
 - Encryption by AES mode of op ECB
 - Random IV
 
-The issue is that **t** is the result of our encryption with the key for each block and afterwards xored with the IV. So if the two blocks of both messages ( m1 & m2 ) are the same and using the same key, we can retrieve the key stream just with one plain text.
+The issue is that **t** ( which corresponds to the key stream) is the result of our encryption with the key for each block and afterwards xored with the IV. So if the two blocks of both messages ( m1 & m2 ) are the same and using the same key, we can retrieve the key stream just with one plain text. If the IV was xored with the messages before going through the AES function, this would make the key stream different for each message since the IV is random.
 
 ### Cracking
 
@@ -26,9 +26,12 @@ $$
 t2 = c2[1] \oplus IV_2
 $$
 
-Like said, if t = t2, therefore : 
+Like said, if t1 = t2, therefore : 
 
 $$current\_stream = m1\_blocks[i] \oplus c1\_blocks[i]$$
+
+Key stream t1 can decrypt C2 cipher and vise versa, now we can retrieve the plain text.
+
 $$pt = current\_stream \oplus c2\_blocks[i]$$
 
 The decrypted blocks are then concatenated together to form the decrypted message. Finally we join each block and capture the flag.
@@ -44,9 +47,10 @@ The primary security flaw in this system's implementation lies in the malfunctio
 
 Additionally, the keystream is encrypted with 16 bytes of zeros, leading to each 16-byte block lacking any randomness. This significantly undermines the security of the system by compromising the unpredictability which is essential for robust encryption. 
 
-By applying mathematical formulas, we can determine **V**, a constant utilized in both texts, which will be crucial for later decrypting our plaintext message. Additionally, we need to identify another unknown variable, sigma. Sigma is the keystream of our code.
 
 ### The math :)
+
+By applying mathematical formulas, we can determine **V**, a constant utilized in both texts, which will be crucial for later decrypting our plaintext message. Additionally, we need to identify another unknown variable, sigma. Sigma is the keystream of the implementation.
 
 We can determine sigma by subtracting our plaintext block from the corresponding ciphered text block within the same message. We can choose any block—first, second, third, etc.—since they all share the same keystream, owing to the flaw of the implementation of the counter mode (CTR).
 
