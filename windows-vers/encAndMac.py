@@ -84,6 +84,8 @@ def crack_encryption(m1, nonce1, tag1, c1, nonce2, tag2, c2):
     # find v
     v = ((bytesToInt(tag1) - sigma) * mod_inverse(sumM1, p)) % p
 
+
+
     # length of c2_blocks
     n = len(c2_blocks)
     # find sigma for the second message

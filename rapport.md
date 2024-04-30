@@ -3,20 +3,21 @@ Author : Nathan Rayburn
 
 ## Mode of op
 
-### Variables 
+### Introduction
 
-By analyzing the code for the encryption we have got : 
+Encryption
 
-- (Message, Key)
-- Padding for the message
-- Encryption by AES mode of op ECB
-- Random IV
+![image](encry.png)
 
-The issue is that **t** ( which corresponds to the key stream) is the result of our encryption with the key for each block and afterwards xored with the IV. So if the two blocks of both messages ( m1 & m2 ) are the same and using the same key, we can retrieve the key stream just with one plain text. If the IV was xored with the messages before going through the AES function, this would make the key stream different for each message since the IV is random.
+Decryption 
+
+![image](decry.png)
+
+In our current implementation, **t** functions as the key stream for the chain. The problem with this approach is that **t** is XORed with the IV after it has been generated, not before. This makes the IV completely useless... This design can be compromised if we encounter two separate messages that begin with the same 16-byte block. If this condition is met, the key stream for each subsequent iteration used to cipher the rest of the message can be decrypted. To retrieve **t**, one can simply XOR c[1] with c[0], effectively eliminating the IV from the equation.
 
 ### Cracking
 
-c1 and c2 are the ciphertexts, IV_1 and IV_2 are the initialization vectors. If t1 equals t2, it means that we can decrypt the whole ciphered c2. 
+c1 and c2 are the ciphertexts, IV_1 and IV_2 are the initialization vectors. If t1 equals t2, it means that we can decrypt the whole ciphered c2.  We also need m1 which is the initial plain text message for c1.
 
 $$
 t1 = c1[1] \oplus IV_1
@@ -136,7 +137,7 @@ $$
 \text{{plaintext}} = \bigoplus_{c2_{block} \in c2\_blocks} \left( \left( (c2_{block}[i]) - \sigma_2 \right) \mod p \right)
 $$
 
-The result of the decrypted message : 
+The result of cracking the ciphered message : 
 
 ```bash
 b'Congrats! The secret is cozening'

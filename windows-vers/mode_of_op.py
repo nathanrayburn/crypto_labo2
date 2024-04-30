@@ -14,7 +14,6 @@ def encrypt(message, key):
     IV = Random.get_random_bytes(16)
     ciphertext = [IV]
     # First block
-
     m1 = message[:16]
     t = cipher.encrypt(m1)
     c1 = strxor(t, IV)

@@ -17,7 +17,7 @@ def h(m, k):
     h = k
     for i in range(len(blocks)):
         h = strxor(AES.new(blocks[i], AES.MODE_ECB).encrypt(h), h)
-    return h
+    return h 
 
 def mac(message, key):
     return h(message, key)
