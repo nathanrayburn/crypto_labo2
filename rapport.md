@@ -63,10 +63,13 @@ The second step is to isolate **V** like so and plug in the sigma we have found 
 
 
  Sigma formula :
+ 
 $$
 \sigma = \left( \text{tag1} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
 $$
+
 **V** Isolated :
+
 $$
 v = \left( \left((\text{tag1}) - \sigma\right) \times \text{{mod\_inverse}}({\sum_{i=0}^{n} m_i}, p) \right) \mod p
 $$
@@ -97,10 +100,13 @@ We can find an equivalent by using our previous formula to find sigma :
 $$
 \sigma = \left( c1\_blocks[0] - m1\_blocks[0] \right) \mod p
 $$
+
 By isolating our message we get this :
+
 $$
 m1\_blocks[0] = \left( c1\_blocks[0] - \sigma \right) \mod p
 $$
+
 So this is for a single block.
 Now we can generalize it for all blocks of our message m[i] :
 
@@ -125,15 +131,19 @@ $$
 $$
 
 Sum of c2 blocks :
+
 $$
 \text{sumC2} = \left( \sum_{i=0}^{\text{n}} \text(c2\_blocks[i]) \right) \mod p
 $$
+
 Everything placed in a single equation to find sigma of the second message :
+
 $$
 \sigma_2 = \left( \left((\text{{tag2}}) - v \cdot \text{{sumC2}}\right) \cdot \text{{mod\_inverse}}(1 - v \cdot n, p) \right) \mod p
 $$
 
 We have finally found the sigma for the other message, this means we are ready to decrypt.
+
 $$
 \text{{plaintext}} = \bigoplus_{c2_{block} \in c2\_blocks} \left( \left( (c2_{block}[i]) - \sigma_2 \right) \mod p \right)
 $$
