@@ -87,6 +87,7 @@ Here is sigma isolated :
 $$
 \sigma = \left( \text{MAC} - \sum_{i=0}^{n} m_i \cdot v \right) \mod p
 $$
+
 ---
 
 The issue is that we don't have m[i], we must find an equivalent for it. We can do so by using a formula that we have used previously. 
