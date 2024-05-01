@@ -42,8 +42,18 @@ def ex():
     print("m prime = %s" % mPrime)
     print("verify original message with key = %s" % verify(m, k, mc))
     print("verify m prime with original key = %s" % verify(mPrime, k, newMac))
+    pretty_print(mPrime)
+
+    key = b'change to your k'
+    mc = b64decode(b'G5Rr9zn8+YEAR4bWd6cbrg==')
+
+    newMac, mPrime = create_new_message(m, mc, b"800")
+
+    print("verify with your key = %s" % verify(mPrime, key, newMac))
 
     pretty_print(mPrime)
+
+
 #m has to be a bytestring
 def pretty_print(m):
     print(m.decode("UTF-8", errors="ignore"))
